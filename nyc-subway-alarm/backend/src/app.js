@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import stationsRoutes from "./routes/stations.routes.js";
+import mapRoutes from "./routes/map.routes.js";
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/stations", stationsRoutes);
+app.use("/api/map", mapRoutes);
 
 export default app;

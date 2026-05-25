@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 
-export default function SubwayMap({ stations, selectedStation, userLocation }) {
+export default function SubwayMap({ stations, subwayLines, selectedStation, userLocation }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const selectedMarkerRef = useRef(null);
   const userMarkerRef = useRef(null);
+  const stationMarkersRef = useRef([]);
 
   useEffect(() => {
     const token = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -19,9 +20,9 @@ export default function SubwayMap({ stations, selectedStation, userLocation }) {
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/streets-v12",
+      style: "mapbox://styles/mapbox/light-v11",
       center: [-73.9855, 40.758],
-      zoom: 11
+      zoom: 10.5
     });
 
     mapRef.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -32,19 +33,59 @@ export default function SubwayMap({ stations, selectedStation, userLocation }) {
   }, []);
 
   useEffect(() => {
+    if (!mapRef.current || !subwayLines) return;
+
+    const map = mapRef.current;
+
+    function addLines() {
+      if (map.getSource("subway-lines")) {
+        map.getSource("subway-lines").setData(subwayLines);
+        return;
+      }
+
+      map.addSource("subway-lines", {
+        type: "geojson",
+        data: subwayLines
+      });
+
+      map.addLayer({
+        id: "subway-lines-layer",
+        type: "line",
+        source: "subway-lines",
+        paint: {
+          "line-color": ["get", "color"],
+          "line-width": 4,
+          "line-opacity": 0.85
+        }
+      });
+    }
+
+    if (map.isStyleLoaded()) {
+      addLines();
+    } else {
+      map.once("load", addLines);
+    }
+  }, [subwayLines]);
+
+  useEffect(() => {
     if (!mapRef.current || stations.length === 0) return;
+
+    stationMarkersRef.current.forEach((marker) => marker.remove());
+    stationMarkersRef.current = [];
 
     stations.forEach((station) => {
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <strong>${station.name}</strong>
         <br />
-        Lines: ${station.lines.join(", ")}
+        Lines: ${station.lines?.join(", ") || "Not assigned"}
       `);
 
-      new mapboxgl.Marker()
+      const marker = new mapboxgl.Marker()
         .setLngLat([station.longitude, station.latitude])
         .setPopup(popup)
         .addTo(mapRef.current);
+
+      stationMarkersRef.current.push(marker);
     });
   }, [stations]);
 
@@ -65,7 +106,7 @@ export default function SubwayMap({ stations, selectedStation, userLocation }) {
         new mapboxgl.Popup({ offset: 25 }).setHTML(`
           <strong>Destination: ${selectedStation.name}</strong>
           <br />
-          Alert distance: 100 meters
+          Alert distance enabled
         `)
       )
       .addTo(mapRef.current);
