@@ -52,20 +52,25 @@ export default function MapPage() {
     }
 
     if (distanceToStop <= alertDistance) {
-      if (alertType === "notification" || alertType === "both") {
-        sendNotification(
-          "Wake up! Your stop is near.",
-          `You are within ${alertDistance} meters of ${selectedStation.name}.`
-        );
-      }
-
-      if (alertType === "vibration" || alertType === "both") {
-        vibratePhone();
-      }
-
+      triggerAlarm();
       setHasAlerted(true);
     }
   }, [alarmStarted, hasAlerted, distanceToStop, selectedStation, alertDistance, alertType]);
+
+  function triggerAlarm() {
+    const stopName = selectedStation?.name || "your selected stop";
+
+    if (alertType === "notification" || alertType === "both") {
+      sendNotification(
+        "Wake up! Your stop is near.",
+        `You are close to ${stopName}.`
+      );
+    }
+
+    if (alertType === "vibration" || alertType === "both") {
+      vibratePhone();
+    }
+  }
 
   async function handleStartAlarm() {
     if (!selectedStation) {
@@ -86,6 +91,16 @@ export default function MapPage() {
   function handleStopAlarm() {
     setAlarmStarted(false);
     setHasAlerted(false);
+  }
+
+  async function handleTestAlarm() {
+    const permission = await requestNotificationPermission();
+
+    if (permission === "denied" && alertType !== "vibration") {
+      alert("Notification permission denied. Vibration may still work on supported phones.");
+    }
+
+    triggerAlarm();
   }
 
   return (
@@ -154,6 +169,10 @@ export default function MapPage() {
               <option value="vibration">Vibration only</option>
             </select>
           </div>
+
+          <button className="secondary-button" onClick={handleTestAlarm}>
+            Test Alarm
+          </button>
 
           {selectedStation && (
             <div className="selected-station">
