@@ -142,3 +142,34 @@ body {
   color: #dc2626;
   font-weight: bold;
 }
+
+.primary-button,
+.danger-button {
+  margin-top: 12px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #2563eb;
+}
+
+.danger-button {
+  background: #dc2626;
+}
+
+.alarm-active {
+  margin-top: 12px;
+  color: #2563eb;
+  font-weight: bold;
+}
+
+.alarm-triggered {
+  margin-top: 12px;
+  color: #16a34a;
+  font-weight: bold;
+}

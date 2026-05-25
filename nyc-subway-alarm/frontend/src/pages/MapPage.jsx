@@ -3,11 +3,16 @@ import SubwayMap from "../components/Map/SubwayMap.jsx";
 import StationSearch from "../components/Search/StationSearch.jsx";
 import useGeolocation from "../hooks/useGeolocation.js";
 import { getDistanceInMeters } from "../utils/distance.js";
+import { requestNotificationPermission, sendNotification } from "../hooks/useNotification.js";
+import { vibratePhone } from "../hooks/useVibration.js";
 import { checkBackendHealth } from "../services/api.js";
 
 export default function MapPage() {
   const [backendStatus, setBackendStatus] = useState("Checking backend...");
   const [selectedStation, setSelectedStation] = useState(null);
+  const [alarmStarted, setAlarmStarted] = useState(false);
+  const [hasAlerted, setHasAlerted] = useState(false);
+
   const { location, error: locationError } = useGeolocation();
 
   useEffect(() => {
@@ -32,6 +37,38 @@ export default function MapPage() {
           selectedStation.longitude
         )
       : null;
+
+  useEffect(() => {
+    if (!alarmStarted || hasAlerted || distanceToStop === null || !selectedStation) {
+      return;
+    }
+
+    if (distanceToStop <= 100) {
+      sendNotification(
+        "Wake up! Your stop is near.",
+        `You are within 100 meters of ${selectedStation.name}.`
+      );
+
+      vibratePhone();
+      setHasAlerted(true);
+    }
+  }, [alarmStarted, hasAlerted, distanceToStop, selectedStation]);
+
+  async function handleStartAlarm() {
+    const permission = await requestNotificationPermission();
+
+    if (permission === "denied") {
+      alert("Notification permission denied. Vibration may still work on supported phones.");
+    }
+
+    setHasAlerted(false);
+    setAlarmStarted(true);
+  }
+
+  function handleStopAlarm() {
+    setAlarmStarted(false);
+    setHasAlerted(false);
+  }
 
   return (
     <div className="app">
@@ -65,7 +102,13 @@ export default function MapPage() {
         <section className="card">
           <h2>Select Destination</h2>
 
-          <StationSearch onSelectStation={setSelectedStation} />
+          <StationSearch
+            onSelectStation={(station) => {
+              setSelectedStation(station);
+              setAlarmStarted(false);
+              setHasAlerted(false);
+            }}
+          />
 
           {selectedStation && (
             <div className="selected-station">
@@ -82,6 +125,24 @@ export default function MapPage() {
               )}
 
               <p>Alarm target: 100 meters before this stop.</p>
+
+              {!alarmStarted ? (
+                <button className="primary-button" onClick={handleStartAlarm}>
+                  Start Alarm
+                </button>
+              ) : (
+                <button className="danger-button" onClick={handleStopAlarm}>
+                  Stop Alarm
+                </button>
+              )}
+
+              {alarmStarted && !hasAlerted && (
+                <p className="alarm-active">Alarm is active.</p>
+              )}
+
+              {hasAlerted && (
+                <p className="alarm-triggered">Alarm triggered for this stop.</p>
+              )}
             </div>
           )}
         </section>
