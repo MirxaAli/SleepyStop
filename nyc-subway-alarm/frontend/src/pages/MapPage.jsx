@@ -11,8 +11,12 @@ export default function MapPage() {
   const [backendStatus, setBackendStatus] = useState("Checking backend...");
   const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
+
   const [alarmStarted, setAlarmStarted] = useState(false);
   const [hasAlerted, setHasAlerted] = useState(false);
+
+  const [alertDistance, setAlertDistance] = useState(100);
+  const [alertType, setAlertType] = useState("both");
 
   const { location, error: locationError } = useGeolocation();
 
@@ -47,22 +51,32 @@ export default function MapPage() {
       return;
     }
 
-    if (distanceToStop <= 100) {
-      sendNotification(
-        "Wake up! Your stop is near.",
-        `You are within 100 meters of ${selectedStation.name}.`
-      );
+    if (distanceToStop <= alertDistance) {
+      if (alertType === "notification" || alertType === "both") {
+        sendNotification(
+          "Wake up! Your stop is near.",
+          `You are within ${alertDistance} meters of ${selectedStation.name}.`
+        );
+      }
 
-      vibratePhone();
+      if (alertType === "vibration" || alertType === "both") {
+        vibratePhone();
+      }
+
       setHasAlerted(true);
     }
-  }, [alarmStarted, hasAlerted, distanceToStop, selectedStation]);
+  }, [alarmStarted, hasAlerted, distanceToStop, selectedStation, alertDistance, alertType]);
 
   async function handleStartAlarm() {
+    if (!selectedStation) {
+      alert("Please select a destination station first.");
+      return;
+    }
+
     const permission = await requestNotificationPermission();
 
-    if (permission === "denied") {
-      alert("Notification permission denied. Vibration may still work on supported phones.");
+    if (permission === "denied" && alertType !== "vibration") {
+      alert("Notification permission denied. You can still use vibration on supported phones.");
     }
 
     setHasAlerted(false);
@@ -82,7 +96,7 @@ export default function MapPage() {
       </header>
 
       <main className="main">
-        <section className="card">
+        <section className="card status-card">
           <h2>Project Status</h2>
           <p>{backendStatus}</p>
           <p>Stations loaded: {stations.length}</p>
@@ -104,8 +118,8 @@ export default function MapPage() {
           {locationError && <p className="error-text">{locationError}</p>}
         </section>
 
-        <section className="card">
-          <h2>Select Destination</h2>
+        <section className="card trip-panel">
+          <h2>Set Your Stop Alarm</h2>
 
           <StationSearch
             stations={stations}
@@ -116,21 +130,53 @@ export default function MapPage() {
             }}
           />
 
+          <div className="form-group">
+            <label>Alert Distance</label>
+            <select
+              value={alertDistance}
+              onChange={(event) => setAlertDistance(Number(event.target.value))}
+            >
+              <option value={100}>100 meters before stop</option>
+              <option value={200}>200 meters before stop</option>
+              <option value={300}>300 meters before stop</option>
+              <option value={500}>500 meters before stop</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Alert Type</label>
+            <select
+              value={alertType}
+              onChange={(event) => setAlertType(event.target.value)}
+            >
+              <option value="both">Notification + Vibration</option>
+              <option value="notification">Notification only</option>
+              <option value="vibration">Vibration only</option>
+            </select>
+          </div>
+
           {selectedStation && (
             <div className="selected-station">
               <h3>Selected Stop</h3>
               <p>
                 <strong>{selectedStation.name}</strong>
               </p>
-              <p>Lines: {selectedStation.lines.join(", ")}</p>
+
+              {selectedStation.lines?.length > 0 && (
+                <p>Lines: {selectedStation.lines.join(", ")}</p>
+              )}
 
               {distanceToStop !== null && (
                 <p>
-                  Distance from you: <strong>{Math.round(distanceToStop)} meters</strong>
+                  Distance from you:{" "}
+                  <strong>{Math.round(distanceToStop)} meters</strong>
                 </p>
               )}
 
-              <p>Alarm target: 100 meters before this stop.</p>
+              <p>
+                Alarm will trigger at:{" "}
+                <strong>{alertDistance} meters before stop</strong>
+              </p>
 
               {!alarmStarted ? (
                 <button className="primary-button" onClick={handleStartAlarm}>
@@ -143,7 +189,7 @@ export default function MapPage() {
               )}
 
               {alarmStarted && !hasAlerted && (
-                <p className="alarm-active">Alarm is active.</p>
+                <p className="alarm-active">Alarm is active. Tracking your trip...</p>
               )}
 
               {hasAlerted && (

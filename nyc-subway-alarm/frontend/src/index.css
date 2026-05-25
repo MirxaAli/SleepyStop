@@ -173,3 +173,59 @@ body {
   color: #16a34a;
   font-weight: bold;
 }
+
+.trip-panel {
+  border-left: 6px solid #2563eb;
+}
+
+.form-group {
+  margin-top: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+}
+
+.status-card {
+  border-left: 6px solid #16a34a;
+}
+
+.primary-button,
+.danger-button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #2563eb;
+}
+
+.primary-button:hover {
+  background: #1d4ed8;
+}
+
+.danger-button {
+  background: #dc2626;
+}
+
+.danger-button:hover {
+  background: #b91c1c;
+}
