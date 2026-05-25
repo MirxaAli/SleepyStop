@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import SubwayMap from "../components/Map/SubwayMap.jsx";
 import StationSearch from "../components/Search/StationSearch.jsx";
+import RouteFilter from "../components/Search/RouteFilter.jsx";
 import useGeolocation from "../hooks/useGeolocation.js";
 import { getDistanceInMeters } from "../utils/distance.js";
 import { requestNotificationPermission, sendNotification } from "../hooks/useNotification.js";
@@ -10,6 +11,7 @@ import { checkBackendHealth, getStations } from "../services/api.js";
 export default function MapPage() {
   const [backendStatus, setBackendStatus] = useState("Checking backend...");
   const [stations, setStations] = useState([]);
+  const [selectedLine, setSelectedLine] = useState("All");
   const [selectedStation, setSelectedStation] = useState(null);
 
   const [alarmStarted, setAlarmStarted] = useState(false);
@@ -35,6 +37,11 @@ export default function MapPage() {
 
     loadData();
   }, []);
+
+  const filteredStations =
+    selectedLine === "All"
+      ? stations
+      : stations.filter((station) => station.lines?.includes(selectedLine));
 
   const distanceToStop =
     location && selectedStation
@@ -115,6 +122,7 @@ export default function MapPage() {
           <h2>Project Status</h2>
           <p>{backendStatus}</p>
           <p>Stations loaded: {stations.length}</p>
+          <p>Showing stations: {filteredStations.length}</p>
         </section>
 
         <section className="card">
@@ -136,8 +144,18 @@ export default function MapPage() {
         <section className="card trip-panel">
           <h2>Set Your Stop Alarm</h2>
 
+          <RouteFilter
+            selectedLine={selectedLine}
+            onSelectLine={(line) => {
+              setSelectedLine(line);
+              setSelectedStation(null);
+              setAlarmStarted(false);
+              setHasAlerted(false);
+            }}
+          />
+
           <StationSearch
-            stations={stations}
+            stations={filteredStations}
             onSelectStation={(station) => {
               setSelectedStation(station);
               setAlarmStarted(false);
@@ -181,8 +199,10 @@ export default function MapPage() {
                 <strong>{selectedStation.name}</strong>
               </p>
 
-              {selectedStation.lines?.length > 0 && (
+              {selectedStation.lines?.length > 0 ? (
                 <p>Lines: {selectedStation.lines.join(", ")}</p>
+              ) : (
+                <p>Lines: not assigned yet</p>
               )}
 
               {distanceToStop !== null && (
@@ -220,7 +240,7 @@ export default function MapPage() {
 
         <section className="map-card">
           <SubwayMap
-            stations={stations}
+            stations={filteredStations}
             selectedStation={selectedStation}
             userLocation={location}
           />
