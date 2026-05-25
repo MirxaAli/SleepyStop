@@ -1,7 +1,12 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 
-export default function SubwayMap({ stations, subwayLines, selectedStation, userLocation }) {
+export default function SubwayMap({
+  stations,
+  subwayLines,
+  selectedStation,
+  userLocation
+}) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const selectedMarkerRef = useRef(null);
@@ -20,7 +25,7 @@ export default function SubwayMap({ stations, subwayLines, selectedStation, user
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/navigation-day-v1",
       center: [-73.9855, 40.758],
       zoom: 10.5
     });
@@ -74,6 +79,13 @@ export default function SubwayMap({ stations, subwayLines, selectedStation, user
     stationMarkersRef.current = [];
 
     stations.forEach((station) => {
+      if (
+        typeof station.longitude !== "number" ||
+        typeof station.latitude !== "number"
+      ) {
+        return;
+      }
+
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <strong>${station.name}</strong>
         <br />
@@ -92,13 +104,25 @@ export default function SubwayMap({ stations, subwayLines, selectedStation, user
   useEffect(() => {
     if (!mapRef.current || !selectedStation) return;
 
+    if (
+      typeof selectedStation.longitude !== "number" ||
+      typeof selectedStation.latitude !== "number"
+    ) {
+      return;
+    }
+
     if (selectedMarkerRef.current) {
       selectedMarkerRef.current.remove();
     }
 
     const markerElement = document.createElement("div");
-    markerElement.className = "selected-marker";
-    markerElement.textContent = "★";
+    markerElement.className = "selected-marker-wrapper";
+
+    const innerMarker = document.createElement("div");
+    innerMarker.className = "selected-marker-dot";
+    innerMarker.textContent = "★";
+
+    markerElement.appendChild(innerMarker);
 
     selectedMarkerRef.current = new mapboxgl.Marker(markerElement)
       .setLngLat([selectedStation.longitude, selectedStation.latitude])
@@ -121,6 +145,13 @@ export default function SubwayMap({ stations, subwayLines, selectedStation, user
   useEffect(() => {
     if (!mapRef.current || !userLocation) return;
 
+    if (
+      typeof userLocation.longitude !== "number" ||
+      typeof userLocation.latitude !== "number"
+    ) {
+      return;
+    }
+
     if (userMarkerRef.current) {
       userMarkerRef.current.setLngLat([
         userLocation.longitude,
@@ -130,7 +161,12 @@ export default function SubwayMap({ stations, subwayLines, selectedStation, user
     }
 
     const markerElement = document.createElement("div");
-    markerElement.className = "user-marker";
+    markerElement.className = "user-marker-wrapper";
+
+    const innerMarker = document.createElement("div");
+    innerMarker.className = "user-marker-dot";
+
+    markerElement.appendChild(innerMarker);
 
     userMarkerRef.current = new mapboxgl.Marker(markerElement)
       .setLngLat([userLocation.longitude, userLocation.latitude])

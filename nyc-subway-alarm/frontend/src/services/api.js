@@ -21,4 +21,9 @@ export async function getSubwayLines() {
   return response.data;
 }
 
+export async function getArrivals(stopId) {
+  const response = await api.get(`/api/realtime/arrivals/${stopId}`);
+  return response.data;
+}
+
 export default api;

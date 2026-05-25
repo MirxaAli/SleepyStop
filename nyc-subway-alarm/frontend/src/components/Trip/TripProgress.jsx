@@ -6,7 +6,7 @@ export default function TripProgress({ distanceToStop, alertDistance }) {
   const distance = Math.round(distanceToStop);
 
   let status = "Far away";
-  let progress = 20;
+  let progress = 25;
 
   if (distance <= alertDistance) {
     status = "Alert zone";
@@ -17,9 +17,6 @@ export default function TripProgress({ distanceToStop, alertDistance }) {
   } else if (distance <= alertDistance * 5) {
     status = "Getting close";
     progress = 55;
-  } else {
-    status = "Far away";
-    progress = 25;
   }
 
   return (

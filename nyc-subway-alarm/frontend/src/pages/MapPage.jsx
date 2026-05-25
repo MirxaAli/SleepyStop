@@ -6,6 +6,8 @@ import StationSearch from "../components/Search/StationSearch.jsx";
 import RouteFilter from "../components/Search/RouteFilter.jsx";
 import FavoriteStops from "../components/Favorites/FavoriteStops.jsx";
 import TripProgress from "../components/Trip/TripProgress.jsx";
+import LiveArrivals from "../components/Realtime/LiveArrivals.jsx";
+import TripHistory from "../components/History/TripHistory.jsx";
 
 import useGeolocation from "../hooks/useGeolocation.js";
 import { getDistanceInMeters } from "../utils/distance.js";
@@ -17,13 +19,19 @@ import { vibratePhone } from "../hooks/useVibration.js";
 import {
   checkBackendHealth,
   getStations,
-  getSubwayLines
+  getSubwayLines,
+  getArrivals
 } from "../services/api.js";
 import {
   getFavoriteStations,
   saveFavoriteStation,
   removeFavoriteStation
 } from "../utils/favorites.js";
+import {
+  getTripHistory,
+  saveTripToHistory,
+  clearTripHistory
+} from "../utils/history.js";
 
 const cardAnimation = {
   hidden: { opacity: 0, y: 18 },
@@ -31,13 +39,17 @@ const cardAnimation = {
 };
 
 export default function MapPage() {
-  const [backendStatus, setBackendStatus] = useState("Checking backend...");
+  const [backendStatus, setBackendStatus] = useState("Connecting...");
   const [stations, setStations] = useState([]);
   const [subwayLines, setSubwayLines] = useState(null);
 
   const [selectedLine, setSelectedLine] = useState("All");
   const [selectedStation, setSelectedStation] = useState(null);
   const [favoriteStations, setFavoriteStations] = useState([]);
+  const [tripHistory, setTripHistory] = useState([]);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [alarmStarted, setAlarmStarted] = useState(false);
   const [hasAlerted, setHasAlerted] = useState(false);
@@ -45,13 +57,16 @@ export default function MapPage() {
   const [alertDistance, setAlertDistance] = useState(100);
   const [alertType, setAlertType] = useState("both");
 
+  const [arrivals, setArrivals] = useState([]);
+  const [arrivalsLoading, setArrivalsLoading] = useState(false);
+
   const { location, error: locationError } = useGeolocation();
 
   useEffect(() => {
     async function loadData() {
       try {
-        const health = await checkBackendHealth();
-        setBackendStatus(`Backend connected: ${health.status}`);
+        await checkBackendHealth();
+        setBackendStatus("Live");
 
         const stationData = await getStations();
         setStations(stationData);
@@ -60,9 +75,7 @@ export default function MapPage() {
         setSubwayLines(lineData);
       } catch (error) {
         console.error("Backend connection error:", error);
-        setBackendStatus(
-          "Backend not connected. Make sure backend port 8080 is open."
-        );
+        setBackendStatus("Offline");
       }
     }
 
@@ -71,6 +84,7 @@ export default function MapPage() {
 
   useEffect(() => {
     setFavoriteStations(getFavoriteStations());
+    setTripHistory(getTripHistory());
   }, []);
 
   const filteredStations =
@@ -86,6 +100,21 @@ export default function MapPage() {
           selectedStation.latitude,
           selectedStation.longitude
         )
+      : null;
+
+  const nearestStation =
+    location && stations.length > 0
+      ? stations
+          .map((station) => ({
+            ...station,
+            distance: getDistanceInMeters(
+              location.latitude,
+              location.longitude,
+              station.latitude,
+              station.longitude
+            )
+          }))
+          .sort((a, b) => a.distance - b.distance)[0]
       : null;
 
   useEffect(() => {
@@ -123,6 +152,37 @@ export default function MapPage() {
 
     if (alertType === "vibration" || alertType === "both") {
       vibratePhone();
+    }
+  }
+
+  async function loadArrivalsForStation(station) {
+    if (!station?.stopId) {
+      setArrivals([]);
+      return;
+    }
+
+    setArrivalsLoading(true);
+
+    try {
+      const data = await getArrivals(station.stopId);
+      setArrivals(data.arrivals || []);
+    } catch (error) {
+      console.error("Live arrivals error:", error);
+      setArrivals([]);
+    } finally {
+      setArrivalsLoading(false);
+    }
+  }
+
+  function selectStation(station, shouldSaveHistory = true) {
+    setSelectedStation(station);
+    setAlarmStarted(false);
+    setHasAlerted(false);
+    loadArrivalsForStation(station);
+
+    if (shouldSaveHistory) {
+      const updatedHistory = saveTripToHistory(station);
+      setTripHistory(updatedHistory);
     }
   }
 
@@ -172,9 +232,7 @@ export default function MapPage() {
   }
 
   function handleSelectFavorite(station) {
-    setSelectedStation(station);
-    setAlarmStarted(false);
-    setHasAlerted(false);
+    selectStation(station);
   }
 
   function handleRemoveFavorite(stationId) {
@@ -182,17 +240,156 @@ export default function MapPage() {
     setFavoriteStations(updatedFavorites);
   }
 
+  function handleSelectHistory(item) {
+    selectStation(
+      {
+        id: item.stationId,
+        stopId: item.stopId,
+        name: item.name,
+        lines: item.lines,
+        latitude: item.latitude,
+        longitude: item.longitude
+      },
+      false
+    );
+
+    setHistoryOpen(false);
+    setMenuOpen(false);
+  }
+
+  function handleClearHistory() {
+    const updatedHistory = clearTripHistory();
+    setTripHistory(updatedHistory);
+  }
+
   return (
     <div className="app">
       <motion.header
-        className="header"
-        initial={{ opacity: 0, y: -18 }}
+        className="app-header"
+        initial={{ opacity: 0, y: -22 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
+        transition={{ duration: 0.5 }}
       >
-        <h1>SleepyStop</h1>
-        <p>NYC subway stop alarm for sleepy commuters.</p>
+        <div className="brand-section">
+          <motion.div
+            className="brand-icon"
+            animate={{ y: [0, -4, 0] }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            🚇
+          </motion.div>
+
+          <div>
+            <motion.h1
+              className="brand-title"
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+            >
+              SleepyStop
+            </motion.h1>
+
+            <motion.p
+              className="brand-subtitle"
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25, duration: 0.4 }}
+            >
+              Never miss your NYC subway stop again.
+            </motion.p>
+          </div>
+        </div>
+
+        <div className="header-actions">
+          <motion.div
+            className="live-pill"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.35, duration: 0.35 }}
+          >
+            <span className="live-dot"></span>
+            {backendStatus === "Live" ? "Live tracking" : "Offline"}
+          </motion.div>
+
+          <div className="menu-wrapper">
+            <button
+              className="menu-button"
+              onClick={() => setMenuOpen((value) => !value)}
+              aria-label="Open menu"
+            >
+              ⋮
+            </button>
+
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  className="menu-dropdown"
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <button
+                    onClick={() => {
+                      setHistoryOpen(true);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    History
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleClearHistory();
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Clear History
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </motion.header>
+
+      <AnimatePresence>
+        {historyOpen && (
+          <motion.div
+            className="history-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setHistoryOpen(false)}
+          >
+            <motion.div
+              className="history-modal"
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.96 }}
+              transition={{ duration: 0.25 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="history-modal-header">
+                <h2>Trip History</h2>
+                <button onClick={() => setHistoryOpen(false)}>×</button>
+              </div>
+
+              <TripHistory
+                history={tripHistory}
+                isOpen={true}
+                onToggle={() => setHistoryOpen(false)}
+                onSelectHistory={handleSelectHistory}
+                onClearHistory={handleClearHistory}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="main">
         <motion.div
@@ -206,36 +403,36 @@ export default function MapPage() {
             variants={cardAnimation}
             transition={{ duration: 0.35 }}
           >
-            <h2>Project Status</h2>
-            <p>{backendStatus}</p>
-            <p>Stations loaded: {stations.length}</p>
-            <p>Showing stations: {filteredStations.length}</p>
-            <p>
-              Subway route lines:{" "}
-              {subwayLines?.features?.length
-                ? subwayLines.features.length
-                : "Loading..."}
-            </p>
-          </motion.section>
-
-          <motion.section
-            className="card"
-            variants={cardAnimation}
-            transition={{ duration: 0.35 }}
-          >
-            <h2>Your Location</h2>
-
-            {location ? (
-              <>
-                <p>Latitude: {location.latitude.toFixed(6)}</p>
-                <p>Longitude: {location.longitude.toFixed(6)}</p>
-                <p>Accuracy: about {Math.round(location.accuracy)} meters</p>
-              </>
-            ) : (
-              <p>Waiting for location permission...</p>
-            )}
+            <h2>Nearby Station</h2>
 
             {locationError && <p className="error-text">{locationError}</p>}
+
+            {!location && !locationError && (
+              <p>Waiting for your live location...</p>
+            )}
+
+            {nearestStation && (
+              <>
+                <p>
+                  You are near <strong>{nearestStation.name}</strong>
+                </p>
+                <p>
+                  Distance:{" "}
+                  <strong>{Math.round(nearestStation.distance)} meters away</strong>
+                </p>
+
+                {nearestStation.lines?.length > 0 && (
+                  <p>Lines: {nearestStation.lines.join(", ")}</p>
+                )}
+
+                <button
+                  className="secondary-button"
+                  onClick={() => selectStation(nearestStation)}
+                >
+                  Use Nearest Station
+                </button>
+              </>
+            )}
           </motion.section>
 
           <motion.section
@@ -264,6 +461,7 @@ export default function MapPage() {
               onSelectLine={(line) => {
                 setSelectedLine(line);
                 setSelectedStation(null);
+                setArrivals([]);
                 setAlarmStarted(false);
                 setHasAlerted(false);
               }}
@@ -271,11 +469,7 @@ export default function MapPage() {
 
             <StationSearch
               stations={filteredStations}
-              onSelectStation={(station) => {
-                setSelectedStation(station);
-                setAlarmStarted(false);
-                setHasAlerted(false);
-              }}
+              onSelectStation={selectStation}
             />
 
             <div className="form-group">
@@ -311,7 +505,7 @@ export default function MapPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.96 }}
             >
-              Test Alarm
+              Preview Alert
             </motion.button>
 
             <motion.button
@@ -332,7 +526,7 @@ export default function MapPage() {
                   exit={{ opacity: 0, x: -20, height: 0 }}
                   transition={{ duration: 0.35 }}
                 >
-                  <h3>Selected Stop</h3>
+                  <h3>Your Destination Stop</h3>
 
                   <p>
                     <strong>{selectedStation.name}</strong>
@@ -346,8 +540,9 @@ export default function MapPage() {
 
                   {distanceToStop !== null && (
                     <p>
-                      Distance from you:{" "}
-                      <strong>{Math.round(distanceToStop)} meters</strong>
+                      You are{" "}
+                      <strong>{Math.round(distanceToStop)} meters away</strong>{" "}
+                      from this stop.
                     </p>
                   )}
 
@@ -356,9 +551,14 @@ export default function MapPage() {
                     alertDistance={alertDistance}
                   />
 
+                  <LiveArrivals
+                    arrivals={arrivals}
+                    loading={arrivalsLoading}
+                  />
+
                   <p>
-                    Alarm will trigger at:{" "}
-                    <strong>{alertDistance} meters before stop</strong>
+                    Alarm will trigger at{" "}
+                    <strong>{alertDistance} meters before the stop</strong>.
                   </p>
 
                   {!alarmStarted ? (
@@ -368,7 +568,7 @@ export default function MapPage() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.94 }}
                     >
-                      Start Alarm
+                      Start Tracking
                     </motion.button>
                   ) : (
                     <motion.button
@@ -377,7 +577,7 @@ export default function MapPage() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.94 }}
                     >
-                      Stop Alarm
+                      Stop Tracking
                     </motion.button>
                   )}
 
