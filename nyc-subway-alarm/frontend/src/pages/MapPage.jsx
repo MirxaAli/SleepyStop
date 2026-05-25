@@ -270,18 +270,55 @@ export default function MapPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="brand-section">
+        <div className="train-track-animation" aria-hidden="true">
+          <svg
+            className="track-svg"
+            viewBox="0 0 620 90"
+            preserveAspectRatio="none"
+          >
+            <line x1="30" y1="62" x2="590" y2="62" className="track-line" />
+            <line x1="30" y1="72" x2="590" y2="72" className="track-line track-line-secondary" />
+
+            {Array.from({ length: 18 }).map((_, index) => (
+              <line
+                key={index}
+                x1={45 + index * 30}
+                y1="56"
+                x2={35 + index * 30}
+                y2="78"
+                className="track-sleeper"
+              />
+            ))}
+          </svg>
+
           <motion.div
-            className="brand-icon"
-            animate={{ y: [0, -4, 0] }}
+            className="svg-train"
+            initial={{ x: -120, opacity: 0 }}
+            animate={{ x: 500, opacity: [0, 1, 1, 1] }}
             transition={{
-              duration: 1.8,
-              repeat: Infinity,
-              ease: "easeInOut"
+              duration: 3.2,
+              ease: "easeInOut",
+              delay: 0.35
             }}
           >
-            🚇
+            <svg viewBox="0 0 150 70" className="train-svg">
+              <rect x="18" y="22" width="94" height="32" rx="12" className="train-body" />
+              <path d="M105 24 L132 34 Q140 38 134 48 L112 54 Z" className="train-front" />
+              <rect x="30" y="30" width="18" height="12" rx="3" className="train-window" />
+              <rect x="55" y="30" width="18" height="12" rx="3" className="train-window" />
+              <rect x="80" y="30" width="18" height="12" rx="3" className="train-window" />
+              <circle cx="42" cy="57" r="6" className="train-wheel" />
+              <circle cx="92" cy="57" r="6" className="train-wheel" />
+              <circle cx="123" cy="57" r="6" className="train-wheel" />
+              <circle cx="132" cy="39" r="4" className="train-light" />
+            </svg>
           </motion.div>
+        </div>
+
+        <div className="brand-section">
+          <div className="brand-icon">
+            😴
+          </div>
 
           <div>
             <motion.h1
@@ -299,7 +336,7 @@ export default function MapPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.25, duration: 0.4 }}
             >
-              Never miss your NYC subway stop again.
+              Nap through the ride, not past your stop.
             </motion.p>
           </div>
         </div>
