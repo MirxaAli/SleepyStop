@@ -1,0 +1,130 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #111827;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+.header {
+  padding: 24px;
+  background: #111827;
+  color: white;
+}
+
+.header h1 {
+  margin: 0 0 8px;
+}
+
+.header p {
+  margin: 0;
+}
+
+.main {
+  padding: 24px;
+}
+
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card + .card {
+  margin-top: 20px;
+}
+
+.map-card {
+  margin-top: 20px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 600px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+.station-search {
+  margin-top: 12px;
+}
+
+.station-search label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.station-search input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.station-results {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.station-result {
+  text-align: left;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.station-result:hover {
+  background: #eef2ff;
+}
+
+.station-result span {
+  display: block;
+  margin-top: 4px;
+  color: #4b5563;
+}
+
+.no-results {
+  color: #6b7280;
+}
+
+.selected-station {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+}
+
+.selected-station h3 {
+  margin-top: 0;
+}
+
+.selected-marker {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: 18px;
+}
