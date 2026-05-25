@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { sampleStations } from "../../utils/sampleStations.js";
 
-export default function StationSearch({ onSelectStation }) {
+export default function StationSearch({ stations, onSelectStation }) {
   const [searchText, setSearchText] = useState("");
 
-  const filteredStations = sampleStations.filter((station) =>
+  const filteredStations = stations.filter((station) =>
     station.name.toLowerCase().includes(searchText.toLowerCase())
   );
 

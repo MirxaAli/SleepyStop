@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
-import { sampleStations } from "../../utils/sampleStations.js";
 
-export default function SubwayMap({ selectedStation, userLocation }) {
+export default function SubwayMap({ stations, selectedStation, userLocation }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const selectedMarkerRef = useRef(null);
@@ -27,7 +26,15 @@ export default function SubwayMap({ selectedStation, userLocation }) {
 
     mapRef.current.addControl(new mapboxgl.NavigationControl(), "top-right");
 
-    sampleStations.forEach((station) => {
+    return () => {
+      mapRef.current?.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || stations.length === 0) return;
+
+    stations.forEach((station) => {
       const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
         <strong>${station.name}</strong>
         <br />
@@ -39,11 +46,7 @@ export default function SubwayMap({ selectedStation, userLocation }) {
         .setPopup(popup)
         .addTo(mapRef.current);
     });
-
-    return () => {
-      mapRef.current?.remove();
-    };
-  }, []);
+  }, [stations]);
 
   useEffect(() => {
     if (!mapRef.current || !selectedStation) return;

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "times-square",
+    "name": "Times Sq - 42 St",
+    "lines": ["1", "2", "3", "7", "N", "Q", "R", "W", "S"],
+    "latitude": 40.75529,
+    "longitude": -73.987495
+  },
+  {
+    "id": "grand-central",
+    "name": "Grand Central - 42 St",
+    "lines": ["4", "5", "6", "7", "S"],
+    "latitude": 40.751776,
+    "longitude": -73.976848
+  },
+  {
+    "id": "union-square",
+    "name": "14 St - Union Sq",
+    "lines": ["4", "5", "6", "L", "N", "Q", "R", "W"],
+    "latitude": 40.735736,
+    "longitude": -73.990568
+  },
+  {
+    "id": "atlantic-avenue",
+    "name": "Atlantic Av - Barclays Ctr",
+    "lines": ["2", "3", "4", "5", "B", "D", "N", "Q", "R"],
+    "latitude": 40.68446,
+    "longitude": -73.97689
+  },
+  {
+    "id": "fulton-st",
+    "name": "Fulton St",
+    "lines": ["2", "3", "4", "5", "A", "C", "J", "Z"],
+    "latitude": 40.710374,
+    "longitude": -74.007582
+  }
+]

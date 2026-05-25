@@ -5,10 +5,11 @@ import useGeolocation from "../hooks/useGeolocation.js";
 import { getDistanceInMeters } from "../utils/distance.js";
 import { requestNotificationPermission, sendNotification } from "../hooks/useNotification.js";
 import { vibratePhone } from "../hooks/useVibration.js";
-import { checkBackendHealth } from "../services/api.js";
+import { checkBackendHealth, getStations } from "../services/api.js";
 
 export default function MapPage() {
   const [backendStatus, setBackendStatus] = useState("Checking backend...");
+  const [stations, setStations] = useState([]);
   const [selectedStation, setSelectedStation] = useState(null);
   const [alarmStarted, setAlarmStarted] = useState(false);
   const [hasAlerted, setHasAlerted] = useState(false);
@@ -16,16 +17,19 @@ export default function MapPage() {
   const { location, error: locationError } = useGeolocation();
 
   useEffect(() => {
-    async function testBackend() {
+    async function loadData() {
       try {
-        const data = await checkBackendHealth();
-        setBackendStatus(`Backend connected: ${data.status}`);
+        const health = await checkBackendHealth();
+        setBackendStatus(`Backend connected: ${health.status}`);
+
+        const stationData = await getStations();
+        setStations(stationData);
       } catch (error) {
-        setBackendStatus("Backend not connected. Make sure backend is running on port 8080.");
+        setBackendStatus("Backend not connected. Make sure backend port 8080 is open.");
       }
     }
 
-    testBackend();
+    loadData();
   }, []);
 
   const distanceToStop =
@@ -81,6 +85,7 @@ export default function MapPage() {
         <section className="card">
           <h2>Project Status</h2>
           <p>{backendStatus}</p>
+          <p>Stations loaded: {stations.length}</p>
         </section>
 
         <section className="card">
@@ -103,6 +108,7 @@ export default function MapPage() {
           <h2>Select Destination</h2>
 
           <StationSearch
+            stations={stations}
             onSelectStation={(station) => {
               setSelectedStation(station);
               setAlarmStarted(false);
@@ -148,7 +154,11 @@ export default function MapPage() {
         </section>
 
         <section className="map-card">
-          <SubwayMap selectedStation={selectedStation} userLocation={location} />
+          <SubwayMap
+            stations={stations}
+            selectedStation={selectedStation}
+            userLocation={location}
+          />
         </section>
       </main>
     </div>
