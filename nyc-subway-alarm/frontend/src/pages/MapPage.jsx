@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import SubwayMap from "../components/Map/SubwayMap.jsx";
 import StationSearch from "../components/Search/StationSearch.jsx";
 import RouteFilter from "../components/Search/RouteFilter.jsx";
 import FavoriteStops from "../components/Favorites/FavoriteStops.jsx";
+import TripProgress from "../components/Trip/TripProgress.jsx";
+
 import useGeolocation from "../hooks/useGeolocation.js";
 import { getDistanceInMeters } from "../utils/distance.js";
 import {
@@ -347,6 +350,11 @@ export default function MapPage() {
                       <strong>{Math.round(distanceToStop)} meters</strong>
                     </p>
                   )}
+
+                  <TripProgress
+                    distanceToStop={distanceToStop}
+                    alertDistance={alertDistance}
+                  />
 
                   <p>
                     Alarm will trigger at:{" "}
