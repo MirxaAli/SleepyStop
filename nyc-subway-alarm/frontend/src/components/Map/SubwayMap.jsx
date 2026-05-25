@@ -2,10 +2,11 @@ import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import { sampleStations } from "../../utils/sampleStations.js";
 
-export default function SubwayMap({ selectedStation }) {
+export default function SubwayMap({ selectedStation, userLocation }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const selectedMarkerRef = useRef(null);
+  const userMarkerRef = useRef(null);
 
   useEffect(() => {
     const token = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -72,6 +73,28 @@ export default function SubwayMap({ selectedStation }) {
       essential: true
     });
   }, [selectedStation]);
+
+  useEffect(() => {
+    if (!mapRef.current || !userLocation) return;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLngLat([
+        userLocation.longitude,
+        userLocation.latitude
+      ]);
+      return;
+    }
+
+    const markerElement = document.createElement("div");
+    markerElement.className = "user-marker";
+
+    userMarkerRef.current = new mapboxgl.Marker(markerElement)
+      .setLngLat([userLocation.longitude, userLocation.latitude])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 25 }).setHTML("<strong>Your location</strong>")
+      )
+      .addTo(mapRef.current);
+  }, [userLocation]);
 
   return <div className="map-container" ref={mapContainerRef}></div>;
 }
