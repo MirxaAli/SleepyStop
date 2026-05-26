@@ -2,6 +2,10 @@ import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 
 const MTA_SUBWAY_FEEDS = [
   {
+    name: "1234567",
+    url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs"
+  },
+  {
     name: "ACE",
     url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace"
   },
@@ -26,10 +30,24 @@ const MTA_SUBWAY_FEEDS = [
     url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-l"
   },
   {
-    name: "1234567",
-    url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs"
+    name: "SIR",
+    url: "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si"
   }
 ];
+
+function getStopIdVariants(stopId) {
+  if (!stopId) return [];
+
+  const cleanStopId = String(stopId).trim();
+
+  const variants = new Set([
+    cleanStopId,
+    `${cleanStopId}N`,
+    `${cleanStopId}S`
+  ]);
+
+  return Array.from(variants);
+}
 
 async function fetchFeed(url) {
   const response = await fetch(url);
@@ -52,7 +70,14 @@ function getMinutesFromNow(timestamp) {
   return Math.max(0, Math.round(diffSeconds / 60));
 }
 
+function getDirectionFromStopId(stopId) {
+  if (stopId.endsWith("N")) return "Uptown / Northbound";
+  if (stopId.endsWith("S")) return "Downtown / Southbound";
+  return "Direction not specified";
+}
+
 export async function getArrivalsForStop(stopId) {
+  const stopIdVariants = getStopIdVariants(stopId);
   const allArrivals = [];
 
   for (const feed of MTA_SUBWAY_FEEDS) {
@@ -67,7 +92,7 @@ export async function getArrivalsForStop(stopId) {
         }
 
         tripUpdate.stopTimeUpdate.forEach((stopTime) => {
-          if (stopTime.stopId !== stopId) {
+          if (!stopIdVariants.includes(stopTime.stopId)) {
             return;
           }
 
@@ -78,11 +103,14 @@ export async function getArrivalsForStop(stopId) {
             return;
           }
 
+          const minutes = getMinutesFromNow(arrivalTime);
+
           allArrivals.push({
             route: tripUpdate.trip?.routeId || "Unknown",
             tripId: tripUpdate.trip?.tripId || "",
             stopId: stopTime.stopId,
-            minutes: getMinutesFromNow(arrivalTime),
+            direction: getDirectionFromStopId(stopTime.stopId),
+            minutes,
             timestamp: Number(arrivalTime),
             feed: feed.name
           });
@@ -94,7 +122,7 @@ export async function getArrivalsForStop(stopId) {
   }
 
   return allArrivals
-    .filter((arrival) => arrival.minutes >= 0)
+    .filter((arrival) => arrival.timestamp >= Math.floor(Date.now() / 1000))
     .sort((a, b) => a.timestamp - b.timestamp)
-    .slice(0, 10);
+    .slice(0, 12);
 }
