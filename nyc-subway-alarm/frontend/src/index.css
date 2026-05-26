@@ -1102,3 +1102,245 @@ body {
     height: 52px;
   }
 }
+
+/* 3D train animation layer */
+.header-train-3d {
+  position: absolute;
+  inset: 0;
+  left: 28%;
+  right: 12%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.header-train-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.brand-section,
+.header-actions {
+  position: relative;
+  z-index: 9;
+}
+
+.app-header {
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .header-train-3d {
+    left: 8%;
+    right: 4%;
+    top: 52px;
+    height: 72px;
+    opacity: 0.8;
+  }
+}
+
+/* Strong visible 3D train header layer */
+.app-header {
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+}
+
+.header-train-3d {
+  position: absolute;
+  top: 8px;
+  left: 34%;
+  right: 110px;
+  height: 105px;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.header-train-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.brand-section {
+  position: relative;
+  z-index: 8;
+}
+
+.header-actions {
+  position: relative;
+  z-index: 9;
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    min-height: 150px;
+  }
+
+  .header-train-3d {
+    top: 72px;
+    left: 6%;
+    right: 6%;
+    height: 70px;
+  }
+}
+
+/* Fix 3D train being cut off */
+.app-header {
+  min-height: 170px !important;
+  padding-top: 22px;
+  padding-bottom: 68px;
+  overflow: visible !important;
+}
+
+.header-train-3d {
+  top: 58px !important;
+  left: 26% !important;
+  right: 90px !important;
+  height: 105px !important;
+  z-index: 5 !important;
+  opacity: 1 !important;
+}
+
+.brand-section {
+  z-index: 10 !important;
+}
+
+.header-actions {
+  z-index: 11 !important;
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    min-height: 190px !important;
+    padding-bottom: 90px;
+  }
+
+  .header-train-3d {
+    top: 100px !important;
+    left: 4% !important;
+    right: 4% !important;
+    height: 80px !important;
+  }
+}
+
+/* Restore old 2D train animation and remove 3D train */
+.header-train-3d {
+  display: none !important;
+}
+
+.train-track-animation {
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.track-svg {
+  position: absolute;
+  left: 30%;
+  top: 14px;
+  width: 50%;
+  height: 80px;
+  opacity: 0.45;
+}
+
+.track-line {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.track-line-secondary {
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 3;
+}
+
+.track-sleeper {
+  stroke: rgba(255, 255, 255, 0.32);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.svg-train {
+  display: block !important;
+  position: absolute;
+  top: 17px;
+  left: 30%;
+  width: 150px;
+  height: 70px;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.35));
+}
+
+.train-svg {
+  width: 150px;
+  height: 70px;
+}
+
+.train-body {
+  fill: #f8fafc;
+}
+
+.train-front {
+  fill: #dbeafe;
+}
+
+.train-window {
+  fill: #2563eb;
+  opacity: 0.9;
+}
+
+.train-wheel {
+  fill: #111827;
+}
+
+.train-light {
+  fill: #facc15;
+  animation: train-light-glow 0.9s ease-in-out infinite;
+}
+
+@keyframes train-light-glow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.app-header {
+  min-height: 120px !important;
+  padding-bottom: 24px !important;
+  overflow: hidden !important;
+}
+
+.brand-section,
+.header-actions {
+  position: relative;
+  z-index: 8;
+}
+
+@media (max-width: 900px) {
+  .track-svg {
+    left: 18%;
+    width: 70%;
+    top: 58px;
+    height: 58px;
+  }
+
+  .svg-train {
+    left: 18%;
+    top: 54px;
+    width: 110px;
+    height: 52px;
+  }
+
+  .train-svg {
+    width: 110px;
+    height: 52px;
+  }
+}
